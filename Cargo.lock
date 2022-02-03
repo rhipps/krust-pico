@@ -217,10 +217,12 @@ dependencies = [
  "embedded-hal",
  "embedded-time",
  "panic-halt",
- "panic-probe",
  "rp-pico",
  "rp2040-boot2",
- "rp2040-hal 0.2.0",
+ "rp2040-hal",
+ "usb-device",
+ "usbd-hid",
+ "usbd-serial",
 ]
 
 [[package]]
@@ -340,16 +342,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "de96540e0ebde571dc55c73d60ef407c653844e6f9a1e2fdbd40c07b9252d812"
 
 [[package]]
-name = "panic-probe"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3ab1f00eac22bd18f8e5cae9555f2820b3a0c166b5b556ee3e203746ea6dcf3a"
-dependencies = [
- "cortex-m",
- "defmt",
-]
-
-[[package]]
 name = "paste"
 version = "1.0.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -462,7 +454,7 @@ dependencies = [
  "cortex-m-rt",
  "embedded-time",
  "rp2040-boot2",
- "rp2040-hal 0.3.0",
+ "rp2040-hal",
  "usb-device",
  "usbd-hid",
  "usbd-serial",
@@ -475,20 +467,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8b480fe63133f0d639f82ce5a027fee7cac7ac92f67ef1896ee036a6f9737128"
 dependencies = [
  "crc-any",
-]
-
-[[package]]
-name = "rp2040-hal"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6bcaae95376ae76d5b84f041ae17261da0fc44fb45561ff5e92a93eba8826802"
-dependencies = [
- "cortex-m",
- "embedded-hal",
- "embedded-time",
- "nb 1.0.0",
- "paste",
- "rp2040-pac 0.1.5",
 ]
 
 [[package]]
@@ -506,21 +484,10 @@ dependencies = [
  "paste",
  "pio",
  "rand_core",
- "rp2040-pac 0.2.1",
+ "rp2040-pac",
  "usb-device",
  "vcell",
  "void",
-]
-
-[[package]]
-name = "rp2040-pac"
-version = "0.1.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5b6e222c239e9f08d36faf5e2372b4eb0661b3535e3b28942db1e937a9d15f76"
-dependencies = [
- "cortex-m",
- "cortex-m-rt",
- "vcell",
 ]
 
 [[package]]
@@ -560,9 +527,9 @@ checksum = "388a1df253eca08550bef6c72392cfe7c30914bf41df5269b68cbd6ff8f570a3"
 
 [[package]]
 name = "serde"
-version = "1.0.134"
+version = "1.0.136"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "96b3c34c1690edf8174f5b289a336ab03f568a4460d8c6df75f2f3a692b3bc6a"
+checksum = "ce31e24b01e1e524df96f1c2fdd054405f8d7376249a5110886fb4b658484789"
 
 [[package]]
 name = "ssmarshal"
