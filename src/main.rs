@@ -27,8 +27,10 @@ static mut USB_HID: Option<HIDClass<hal::usb::UsbBus>> = None;
 #[entry]
 fn main() -> ! {
     let mut pac = pac::Peripherals::take().unwrap();
-    let mut watchdog = hal::Watchdog::new(pac.WATCHDOG);
     let core = pac::CorePeripherals::take().unwrap();
+
+    let mut watchdog = hal::Watchdog::new(pac.WATCHDOG);
+
     let clocks = hal::clocks::init_clocks_and_plls(
         rp_pico::XOSC_CRYSTAL_FREQ, 
         pac.XOSC, 
@@ -67,15 +69,13 @@ fn main() -> ! {
     let bus_ref = unsafe { USB_BUS.as_ref().unwrap() };
 
     // Set up the USB HID Class Device driver, providing Mouse Reports
-    let usb_hid = HIDClass::new(bus_ref, KeyboardReport::desc(), 1);
+    let usb_hid = HIDClass::new(bus_ref, KeyboardReport::desc(), 60);
     unsafe {
         // Note (safety): This is safe as interrupts haven't been started yet.
         USB_HID = Some(usb_hid);
     }
 
     // Create a USB device with a fake VID and PID
-    // http://www.linux-usb.org/usb.ids
-    //probably ducky zero vid pid
     let usb_dev = UsbDeviceBuilder::new(bus_ref, UsbVidPid(0x16c0, 0x27db)) 
         .manufacturer("Fake company")
         .product("One Button Keyboard")
@@ -90,7 +90,7 @@ fn main() -> ! {
     unsafe {
         // Enable the USB interrupt
         pac::NVIC::unmask(hal::pac::Interrupt::USBCTRL_IRQ);
-    };
+    }
 
     let mut delay = cortex_m::delay::Delay::new(core.SYST, clocks.system_clock.freq().integer());
 
@@ -99,13 +99,15 @@ fn main() -> ! {
     let button = pins.gpio10.into_pull_up_input();
 
     loop {
-        keyboard_press(key_report(0x17)).ok().unwrap_or(0);
         if button.is_low().unwrap() {
+            // delay.delay_ms(500);
             output_pin.set_high().unwrap();
             keyboard_press(key_report(0x17)).ok().unwrap_or(0);
             //keyboard_press(key_report(0x00)).ok().unwrap_or(0);
         } else {
+            //keyboard_press(key_report(0x17)).ok().unwrap_or(0);
              output_pin.set_low().unwrap();
+             keyboard_press(key_report(0x0)).ok().unwrap_or(0);
             // delay.delay_ms(1000);
         }
     }
