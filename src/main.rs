@@ -1,22 +1,18 @@
-//! keyboard stuff
-
 #![no_std]
 #![no_main]
 
 use cortex_m_rt::entry;
 use embedded_hal::digital::v2::{InputPin, OutputPin};
 use panic_halt as _;
+
+use embedded_time::fixed_point::FixedPoint;
+use usb_device::{class_prelude::*, prelude::*};
+
 use rp_pico::Pins;
 use rp_pico::hal;
-use rp_pico::hal::pac;
-use rp_pico::hal::clocks;
 use rp_pico::hal::prelude::*;
-
-use embedded_time::rate::*;
-use usb_device::{class_prelude::*, prelude::*};
+use rp_pico::hal::pac;
 use rp_pico::hal::pac::interrupt;
-
-use usb_device::bus::UsbBusAllocator;
 
 use usbd_hid::descriptor::generator_prelude::*;
 use usbd_hid::descriptor::KeyboardReport;
@@ -33,7 +29,7 @@ fn main() -> ! {
     let mut pac = pac::Peripherals::take().unwrap();
     let mut watchdog = hal::Watchdog::new(pac.WATCHDOG);
     let core = pac::CorePeripherals::take().unwrap();
-        let clocks = clocks::init_clocks_and_plls(
+    let clocks = hal::clocks::init_clocks_and_plls(
         rp_pico::XOSC_CRYSTAL_FREQ, 
         pac.XOSC, 
         pac.CLOCKS, 
@@ -45,14 +41,14 @@ fn main() -> ! {
     .ok()
     .unwrap();
 
-    let mut delay = cortex_m::delay::Delay::new(core.SYST, clocks.system_clock.freq().integer());
-
     let sio = hal::Sio::new(pac.SIO);
 
-    let pins = Pins::new(pac.IO_BANK0, 
+    let pins = Pins::new(
+        pac.IO_BANK0, 
         pac.PADS_BANK0, 
         sio.gpio_bank0, 
-        &mut pac.RESETS);
+        &mut pac.RESETS,
+    );
 
     // HID Stuff
     // Set up the USB driver
@@ -71,14 +67,16 @@ fn main() -> ! {
     let bus_ref = unsafe { USB_BUS.as_ref().unwrap() };
 
     // Set up the USB HID Class Device driver, providing Mouse Reports
-    let usb_hid = HIDClass::new(bus_ref, KeyboardReport::desc(), 60);
+    let usb_hid = HIDClass::new(bus_ref, KeyboardReport::desc(), 1);
     unsafe {
         // Note (safety): This is safe as interrupts haven't been started yet.
         USB_HID = Some(usb_hid);
     }
 
     // Create a USB device with a fake VID and PID
-    let usb_dev = UsbDeviceBuilder::new(bus_ref, UsbVidPid(0x16c0, 0x27db))
+    // http://www.linux-usb.org/usb.ids
+    //probably ducky zero vid pid
+    let usb_dev = UsbDeviceBuilder::new(bus_ref, UsbVidPid(0x16c0, 0x27db)) 
         .manufacturer("Fake company")
         .product("One Button Keyboard")
         .serial_number("TEST")
@@ -94,21 +92,21 @@ fn main() -> ! {
         pac::NVIC::unmask(hal::pac::Interrupt::USBCTRL_IRQ);
     };
 
-     // Set a pin to drive output
-     let mut output_pin = pins.led.into_push_pull_output();
-     let button = pins.gpio15.into_pull_down_input();
+    let mut delay = cortex_m::delay::Delay::new(core.SYST, clocks.system_clock.freq().integer());
+
+    // Set a pin to drive output
+    let mut output_pin = pins.led.into_push_pull_output();
+    let button = pins.gpio10.into_pull_up_input();
 
     loop {
-        if button.is_high().unwrap() {
-            delay.delay_ms(1000);
-            keyboard_press(key_report(17)).ok().unwrap_or(0);
+        keyboard_press(key_report(0x17)).ok().unwrap_or(0);
+        if button.is_low().unwrap() {
             output_pin.set_high().unwrap();
-            delay.delay_ms(100);
-            keyboard_press(key_report(0)).ok().unwrap_or(0);
-            output_pin.set_low().unwrap();
-            delay.delay_ms(100);
+            keyboard_press(key_report(0x17)).ok().unwrap_or(0);
+            //keyboard_press(key_report(0x00)).ok().unwrap_or(0);
         } else {
-            output_pin.set_high().unwrap();
+             output_pin.set_low().unwrap();
+            // delay.delay_ms(1000);
         }
     }
 }
